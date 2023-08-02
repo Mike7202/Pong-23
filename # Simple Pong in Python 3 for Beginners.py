@@ -1,15 +1,32 @@
 import pygame
+import random
+from pygame import mixer
+
 pygame.init()
-
-
-WIDTH, HEIGHT = 700, 500
+WIDTH, HEIGHT = 800, 600
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Pong")
+
+speed_boost_available = False
+speed_x = -100
+speed_y = -100
+last_grabbed = 0
+
+# Background Image
+background = random.choice([pygame.image.load('background.png'), pygame.image.load('shot-1.png'), pygame.image.load('space-earth.png')])
+
+# Background sound
+
+
+mixer.music.load('background.wav')
+mixer.music.play(-1)
 
 FPS = 60
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
+RED = (255, 0, 0)
+BLUE = (0, 0, 255)
 
 PADDLE_WIDTH, PADDLE_HEIGHT = 20, 100
 BALL_RADIUS = 7
@@ -19,7 +36,7 @@ WINNING_SCORE = 10
 
 
 class Paddle:
-    COLOR = WHITE
+    COLOR = RED
     VEL = 4
 
     def __init__(self, x, y, width, height):
@@ -70,6 +87,7 @@ class Ball:
 
 def draw(win, paddles, ball, left_score, right_score):
     win.fill(BLACK)
+    win.blit(background, (0, 0))
 
     left_score_text = SCORE_FONT.render(f"{left_score}", 1, WHITE)
     right_score_text = SCORE_FONT.render(f"{right_score}", 1, WHITE)
@@ -133,6 +151,7 @@ def handle_paddle_movement(keys, left_paddle, right_paddle):
 def main():
     run = True
     clock = pygame.time.Clock()
+
 
     left_paddle = Paddle(10, HEIGHT//2 - PADDLE_HEIGHT //
                          2, PADDLE_WIDTH, PADDLE_HEIGHT)
