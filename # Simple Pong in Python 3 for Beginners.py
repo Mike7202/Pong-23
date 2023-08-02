@@ -16,9 +16,7 @@ last_grabbed = 0
 background = random.choice([pygame.image.load('background.png'), pygame.image.load('shot-1.png'), pygame.image.load('space-earth.png')])
 
 # Background sound
-
-
-mixer.music.load('background.wav')
+mixer.music.load(random.choice(['background.wav', 'retro-city-14099.mp3']))
 mixer.music.play(-1)
 
 FPS = 60
