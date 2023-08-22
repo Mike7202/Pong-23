@@ -1,19 +1,30 @@
 import pygame
 import random
+import button
+from random import randrange
 from pygame import mixer
+
 
 pygame.init()
 WIDTH, HEIGHT = 800, 600
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Pong")
 
-speed_boost_available = False
-speed_x = -100
-speed_y = -100
-last_grabbed = 0
+# Game variables
+game_paused = False
+
 
 # Background Image
 background = random.choice([pygame.image.load('background.png'), pygame.image.load('shot-1.png'), pygame.image.load('space-earth.png')])
+
+# Power ups
+POWERUP_RADIUS = 10
+POWERUP_COLOR = (0, 255, 0)
+POWERUP_SPEED_BOOST = 2
+# After importing necessary libraries
+speed_boost_img = pygame.image.load("flash (1).png")
+speed_boost_img = pygame.transform.scale(speed_boost_img, (2 * POWERUP_RADIUS, 2 * POWERUP_RADIUS))
+
 
 # Background sound
 mixer.music.load(random.choice(['background.wav', 'retro-city-14099.mp3']))
@@ -28,6 +39,7 @@ BLUE = (0, 0, 255)
 
 PADDLE_WIDTH, PADDLE_HEIGHT = 20, 100
 BALL_RADIUS = 7
+
 
 SCORE_FONT = pygame.font.SysFont("comicsans", 50)
 WINNING_SCORE = 10
@@ -83,15 +95,21 @@ class Ball:
         self.x_vel *= -1
 
 
+def random_powerup_position():
+    x = random.randint(POWERUP_RADIUS, WIDTH - POWERUP_RADIUS)
+    y = random.randint(POWERUP_RADIUS, HEIGHT - POWERUP_RADIUS)
+    return x, y
+
+
 def draw(win, paddles, ball, left_score, right_score):
     win.fill(BLACK)
     win.blit(background, (0, 0))
 
+
     left_score_text = SCORE_FONT.render(f"{left_score}", 1, WHITE)
     right_score_text = SCORE_FONT.render(f"{right_score}", 1, WHITE)
     win.blit(left_score_text, (WIDTH//4 - left_score_text.get_width()//2, 20))
-    win.blit(right_score_text, (WIDTH * (3/4) -
-                                right_score_text.get_width()//2, 20))
+    win.blit(right_score_text, (WIDTH * (3/4) - right_score_text.get_width()//2, 20))
 
     for paddle in paddles:
         paddle.draw(win)
@@ -145,12 +163,39 @@ def handle_paddle_movement(keys, left_paddle, right_paddle):
     if keys[pygame.K_DOWN] and right_paddle.y + right_paddle.VEL + right_paddle.height <= HEIGHT:
         right_paddle.move(up=False)
 
+#define fonts
+font = pygame.font.SysFont("arialblack", 40)
+
+TEXT_COL = (255, 255, 255)
+
+# Button images
+resume_img = pygame.image.load('button_resume.png').convert_alpha()
+
+# create button instances
+resume_button = button.Button(304, 125, resume_img, 1)
+
+def draw_text(text, font, text_col, x, y):
+  img = font.render(text, True, text_col)
+  WIN.blit(img, (x, y))
+
+
+def unpause():
+    global game_paused
+    game_paused = False
+    pygame.display.update()
+
+def pause():
+    while game_paused:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+    pygame.display.update()
 
 def main():
+    global game_paused
     run = True
     clock = pygame.time.Clock()
-
-
     left_paddle = Paddle(10, HEIGHT//2 - PADDLE_HEIGHT //
                          2, PADDLE_WIDTH, PADDLE_HEIGHT)
     right_paddle = Paddle(WIDTH - 10 - PADDLE_WIDTH, HEIGHT //
@@ -160,20 +205,52 @@ def main():
     left_score = 0
     right_score = 0
 
+    powerup_spawn_timer = 0
+    powerup_spawn_interval = 1
+    powerup_x = 0
+    powerup_y = 0
+
+    direction_change_timer = 0
+    direction_change_interval = 1  # milliseconds (adjust as needed)
+
     while run:
         clock.tick(FPS)
         draw(WIN, [left_paddle, right_paddle], ball, left_score, right_score)
+        # check if game is paused
+        global game_paused
+        if game_paused:
+            game_paused = True
+            pause()
+            if resume_button.draw(WIN):
+                game_paused = False
+                unpause()
+        else:
+            draw_text("Press SPACE to pause", font, TEXT_COL, 160, 250)
+        pygame.display.update()
 
+            # event handler
         for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    game_paused = True
+                    pause()
+                if event.key == resume_button.clicked:
+                    game_paused = False
+                    unpause()
+
             if event.type == pygame.QUIT:
                 run = False
-                break
+
+        pygame.display.update()
 
         keys = pygame.key.get_pressed()
         handle_paddle_movement(keys, left_paddle, right_paddle)
 
         ball.move()
         handle_collision(ball, left_paddle, right_paddle)
+
+
+
 
         if ball.x < 0:
             right_score += 1
@@ -201,6 +278,10 @@ def main():
             right_paddle.reset()
             left_score = 0
             right_score = 0
+
+
+
+
 
     pygame.quit()
 
